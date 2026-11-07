@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0f0a07" />
+    <title>de_tarot · Major Arcana</title>
+    <meta name="description" content="A hand-drawn Counter-Strike tarot. Let the cards decide your next match." />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='11' fill='none' stroke='%23e9b43c' stroke-width='3'/%3E%3Cpath d='M16 1v9M16 22v9M1 16h9M22 16h9' stroke='%23e9b43c' stroke-width='3'/%3E%3C/svg%3E" />
+    <script type="module" src="/src/main.ts"></script>
+  </head>
+  <body>
+    <canvas id="scene" aria-hidden="true"></canvas>
+    <div class="fx-vignette" aria-hidden="true"></div>
+    <div class="fx-grain" aria-hidden="true"></div>
+    <div id="slot-labels" hidden aria-hidden="true"></div>
+
+    <!-- Top HUD -->
+    <header class="hud">
+      <a class="brand" href="#" aria-label="de_tarot">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="10" /><path d="M16 2v8M16 22v8M2 16h8M22 16h8" /></svg>
+        <span>de_tarot</span>
+        <small>Major Arcana</small>
+      </a>
+      <nav class="tabs" aria-label="Sections" hidden>
+        <button class="tab" data-tab="reading"><kbd>Q</kbd><span>Reading</span></button>
+        <button class="tab" data-tab="gallery"><kbd>E</kbd><span>Gallery</span></button>
+      </nav>
+      <div class="hud-actions">
+        <button id="skip-intro" class="btn btn-ghost" hidden>Skip intro</button>
+        <button id="shortcuts-toggle" class="icon-btn" aria-label="Single-key shortcuts" aria-pressed="true" title="Single-key shortcuts (Q, E, F, 1–3)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2" fill="none" /><path d="M6 10h1M9 10h1M12 10h1M15 10h1M18 10h1M7 14h10" fill="none" /></svg>
+        </button>
+        <button id="sound-toggle" class="icon-btn" aria-label="Sound" aria-pressed="true" title="Sound">
+          <svg class="ic-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" /><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" /></svg>
+          <svg class="ic-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" /><path d="M17 9l5 6M22 9l-5 6" fill="none" /></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Title screen: loading, then main menu with matchmaking -->
+    <section id="title" class="title-screen">
+      <div class="title-loading">
+        <h1 class="title-logo">de_tarot</h1>
+        <div class="progress" role="progressbar" aria-label="Loading"><span></span></div>
+        <p class="title-loading-status">Loading map…</p>
+      </div>
+
+      <div class="title-menu" hidden>
+        <p class="eyebrow">Premier · Major Arcana</p>
+        <h1 class="title-logo">de_tarot</h1>
+        <p class="title-tagline">A hand-drawn Counter-Strike tarot.<br />Let the cards call your next match.</p>
+
+        <button id="play-btn" class="btn btn-primary btn-xl">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7" /><path d="M12 2v5M12 17v5M2 12h5M17 12h5" /></svg>
+          Get a reading
+        </button>
+
+        <button id="browse-deck" class="title-link">Browse the deck <span aria-hidden="true">→</span></button>
+      </div>
+
+      <footer class="title-foot">made with <span class="heart" role="img" aria-label="love">❤️</span> by Luz</footer>
+    </section>
+
+
+    <!-- Intro dialogue -->
+    <!-- Screen-reader announcements (dialogue lines, card reveals, forecast) -->
+    <p id="sr-announcer" class="sr-only" aria-live="polite"></p>
+
+    <section id="dialogue" class="dialogue" hidden aria-label="Dialogue">
+      <div class="dialogue-box">
+        <p class="dialogue-speaker"></p>
+        <p class="dialogue-text" aria-hidden="true"></p>
+        <div class="dialogue-choices" hidden></div>
+        <button class="dialogue-continue" hidden aria-label="Continue"><span class="only-fine">Click or Space to continue</span><span class="only-coarse">Tap to continue</span> ▾</button>
+      </div>
+    </section>
+
+    <!-- Reading tab -->
+    <section id="reading-ui" class="reading-ui" hidden>
+      <div class="reading-actions">
+        <p id="reading-hint" class="reading-hint"></p>
+        <div class="reading-buttons">
+          <button id="leave-btn" class="btn btn-ghost"><kbd>Esc</kbd><span>Leave table</span></button>
+          <button id="deal-btn" class="btn btn-primary"><span></span><kbd>Enter</kbd></button>
+        </div>
+      </div>
+      <aside id="reading-panel" class="reading-panel" hidden></aside>
+    </section>
+
+    <!-- Gallery tab -->
+    <section id="gallery" class="gallery" hidden>
+      <div class="gallery-head">
+        <div>
+          <h2>Major Arcana</h2>
+          <p><span class="only-fine">Hover to tilt. Click to inspect.</span><span class="only-coarse">Tap a card to inspect it.</span></p>
+        </div>
+      </div>
+      <div class="gallery-grid"></div>
+    </section>
+
+    <!-- Card inspector -->
+    <div id="inspector" class="inspector" hidden role="dialog" aria-modal="true" aria-labelledby="inspector-title">
+      <div class="inspector-stage">
+        <canvas role="img" aria-label=""></canvas>
+        <p class="inspector-hint" aria-hidden="true"><span class="only-fine">Drag to rotate · F to inspect · ← → to browse</span><span class="only-coarse">Drag to rotate · double-tap to flip</span></p>
+      </div>
+      <div class="inspector-side">
+        <div class="inspector-tools">
+          <button class="icon-btn" data-action="prev" aria-label="Previous">←</button>
+          <button class="icon-btn" data-action="next" aria-label="Next">→</button>
+          <button class="btn btn-ghost" data-action="inspect"><kbd>F</kbd> Inspect</button>
+          <button class="icon-btn" data-action="flip" aria-label="Flip">⟲</button>
+          <button class="icon-btn close" data-action="close" aria-label="Close">✕</button>
+        </div>
+        <article class="inspector-info"></article>
+      </div>
+    </div>
+  </body>
+</html>
